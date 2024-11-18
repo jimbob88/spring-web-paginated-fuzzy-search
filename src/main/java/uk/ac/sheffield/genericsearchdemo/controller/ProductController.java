@@ -23,8 +23,9 @@ public class ProductController {
     }
 
     @GetMapping("/products")
-    public List<Product> getPaginatedProducts(Pageable pageable, @RequestParam String columnName, @RequestParam String searchTerm, @RequestParam String sortBy) {
-        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(sortBy));
+    public List<Product> getPaginatedProducts(Pageable pageable, @RequestParam String columnName, @RequestParam String searchTerm, @RequestParam String sortBy, @RequestParam(defaultValue = "true") boolean ascending) {
+        Sort sortingOrder = Sort.by(ascending ? Sort.Order.asc(sortBy) : Sort.Order.desc(sortBy));
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortingOrder);
         Page<Product> productPage = genericSearchService.search(Product.class, columnName, searchTerm, pageRequest);
         return productPage.getContent();
     }
