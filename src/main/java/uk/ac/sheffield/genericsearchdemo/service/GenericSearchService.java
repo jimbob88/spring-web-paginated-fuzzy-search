@@ -2,14 +2,12 @@ package uk.ac.sheffield.genericsearchdemo.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -39,10 +37,25 @@ public class GenericSearchService {
         return entityManager.createQuery(countQuery).getSingleResult();
     }
 
+    private <T> List<Order> getPageSorting(Sort sort, CriteriaBuilder criteriaBuilder, Root<T> root) {
+        return sort.stream()
+                .map(order -> {
+                    Path<Object> path = root.get(order.getProperty());
+                    if (order.isAscending()) {
+                        return criteriaBuilder.asc(path);
+                    } else {
+                        return criteriaBuilder.desc(path);
+                    }
+                })
+                .toList();
+    }
+
     private <T> Page<T> page(CriteriaBuilder criteriaBuilder, Class<T> entityType, String column, String searchTerm, Pageable pageable, Long totalResults) {
         CriteriaQuery<T> query = criteriaBuilder.createQuery(entityType);
         Root<T> table = query.from(entityType);
+
         query.where(predicate(criteriaBuilder, table, column, searchTerm));
+        query.orderBy(getPageSorting(pageable.getSort(), criteriaBuilder, table));
 
         TypedQuery<T> typedQuery = entityManager
                 .createQuery(query)
