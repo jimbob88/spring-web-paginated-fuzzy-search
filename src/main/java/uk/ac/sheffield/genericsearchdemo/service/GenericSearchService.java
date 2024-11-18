@@ -43,9 +43,8 @@ public class GenericSearchService {
                     Path<Object> path = root.get(order.getProperty());
                     if (order.isAscending()) {
                         return criteriaBuilder.asc(path);
-                    } else {
-                        return criteriaBuilder.desc(path);
                     }
+                    return criteriaBuilder.desc(path);
                 })
                 .toList();
     }
